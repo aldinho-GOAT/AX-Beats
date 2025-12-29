@@ -1,0 +1,266 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New website2</title>
+    <style>
+
+    </style>
+</head>
+<body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Beat Mixer - AX Tech</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        /* CSS VARIABLES FOR THEMES */
+        :root {
+            --bg: #0f0f0f;
+            --panel: #1e1e1e;
+            --accent: #00ffcc;
+            --text: #ffffff;
+            --grid-bg: #000000;
+            --cell-off: #252525;
+        }
+
+        .theme-midnight {
+            --bg: #0a0e14;
+            --panel: #1a202c;
+            --accent: #718096;
+            --cell-off: #2d3748;
+        }
+
+        .theme-808 {
+            --bg: #1a1500;
+            --panel: #2d2400;
+            --accent: #ffcc00;
+            --cell-off: #3d3100;
+        }
+
+        body { 
+            background-color: var(--bg); 
+            color: var(--text); 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .brand-top { position: absolute; top: 15px; left: 15px; color: var(--accent); font-weight: bold; font-size: 1.2rem; }
+        .brand-bottom { position: fixed; bottom: 15px; right: 15px; color: #555; font-size: 0.9rem; }
+
+        .app-container { 
+            background: var(--panel); 
+            padding: 30px; 
+            border-radius: 15px; 
+            border: 1px solid #333; 
+            width: fit-content; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
+        h1 { color: var(--accent); text-align: center; text-transform: uppercase; letter-spacing: 5px; margin-bottom: 20px; }
+
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(16, 40px); 
+            gap: 6px; 
+            background: var(--grid-bg); 
+            padding: 15px; 
+            border-radius: 8px;
+        }
+
+        .cell { 
+            width: 40px; height: 40px; 
+            background: var(--cell-off); 
+            border-radius: 4px; 
+            cursor: pointer; 
+            border: 1px solid #333; 
+        }
+        
+        /* Active States */
+        .cell.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .cell.playing { border: 2px solid white; transform: scale(1.05); }
+
+        .controls { display: flex; gap: 15px; margin-bottom: 25px; align-items: center; justify-content: center; }
+        
+        button { padding: 12px 20px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; text-transform: uppercase; transition: 0.2s; }
+        #playBtn { background: var(--accent); color: black; }
+        #settingsBtn { background: #444; color: white; }
+        #recordBtn { background: #ff4d4d; color: white; }
+
+        /* MODAL STYLES */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: #222;
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid var(--accent);
+            z-index: 100;
+            width: 300px;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 99;
+        }
+        .setting-row { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="brand-top">AX Tech</div>
+
+    <div class="app-container">
+        <h1>Beat Mixer</h1>
+        
+        <div class="controls">
+            <button id="playBtn">Play/Stop</button>
+            <button id="recordBtn">Record</button>
+            <button id="settingsBtn">Settings</button>
+            <button id="clearBtn" style="background: #333; color: #777;">Clear</button>
+        </div>
+
+        <div id="sequencer" class="grid"></div>
+    </div>
+
+    <div class="brand-bottom">by AX</div>
+
+    <div class="modal-overlay" id="overlay"></div>
+    <div class="modal" id="settingsModal">
+        <h3>Settings</h3>
+        <div class="setting-row">
+            <label>Master Volume</label>
+            <input type="range" id="volume" min="-60" max="0" value="-10">
+        </div>
+        <div class="setting-row">
+            <label>Theme</label>
+            <select id="themeSelect" style="padding: 5px;">
+                <option value="neon">Neon (Default)</option>
+                <option value="midnight">Midnight</option>
+                <option value="808">808 Gold</option>
+            </select>
+        </div>
+        <div class="setting-row">
+            <label>BPM: <span id="bpmVal">120</span></label>
+            <input type="range" id="tempo" min="60" max="180" value="120">
+        </div>
+        <button id="closeSettings" style="background: var(--accent); color: black; width: 100%;">Close</button>
+    </div>
+
+    <script>
+        const recorder = new Tone.Recorder();
+        const volNode = new Tone.Volume(-10).toDestination();
+        const synth = new Tone.PolySynth(Tone.Synth).connect(volNode).connect(recorder);
+        
+        const notes = ["C5", "B4", "A4", "G4", "F4", "E4", "D4", "C4"];
+        const grid = document.getElementById('sequencer');
+        let currentStep = 0;
+
+        // Build Grid
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 16; c++) {
+                const cell = document.createElement('div');
+                cell.className = `cell row-${r}`;
+                cell.dataset.row = r;
+                cell.dataset.col = c;
+                cell.onclick = () => {
+                    cell.classList.toggle('active');
+                    if(cell.classList.contains('active')) synth.triggerAttackRelease(notes[r], "16n");
+                };
+                grid.appendChild(cell);
+            }
+        }
+
+        // Loop
+        Tone.Transport.scheduleRepeat((time) => {
+            let step = currentStep % 16;
+            document.querySelectorAll('.cell').forEach(c => c.classList.remove('playing'));
+            const column = document.querySelectorAll(`.cell[data-col="${step}"]`);
+            column.forEach(cell => {
+                cell.classList.add('playing');
+                if (cell.classList.contains('active')) {
+                    synth.triggerAttackRelease(notes[cell.dataset.row], "16n", time);
+                }
+            });
+            currentStep++;
+        }, "16n");
+
+        // UI Interactions
+        const modal = document.getElementById('settingsModal');
+        const overlay = document.getElementById('overlay');
+
+        document.getElementById('settingsBtn').onclick = () => {
+            modal.style.display = 'block';
+            overlay.style.display = 'block';
+        };
+
+        document.getElementById('closeSettings').onclick = () => {
+            modal.style.display = 'none';
+            overlay.style.display = 'none';
+        };
+
+        document.getElementById('playBtn').onclick = async () => {
+            await Tone.start();
+            Tone.Transport.state === "started" ? Tone.Transport.stop() : Tone.Transport.start();
+        };
+
+        document.getElementById('themeSelect').onchange = (e) => {
+            document.body.className = '';
+            if (e.target.value !== 'neon') {
+                document.body.classList.add('theme-' + e.target.value);
+            }
+        };
+
+        document.getElementById('volume').oninput = (e) => {
+            volNode.volume.value = e.target.value;
+        };
+
+        document.getElementById('tempo').oninput = (e) => {
+            Tone.Transport.bpm.value = e.target.value;
+            document.getElementById('bpmVal').innerText = e.target.value;
+        };
+
+        document.getElementById('clearBtn').onclick = () => {
+            document.querySelectorAll('.cell').forEach(c => c.classList.remove('active'));
+        };
+
+        document.getElementById('recordBtn').onclick = async () => {
+            const btn = document.getElementById('recordBtn');
+            if (btn.textContent === "Record") {
+                recorder.start();
+                btn.textContent = "Stop/Save";
+                btn.style.background = "orange";
+            } else {
+                const recording = await recorder.stop();
+                const url = URL.createObjectURL(recording);
+                const anchor = document.createElement("a");
+                anchor.download = "ax-tech-track.webm";
+                anchor.href = url;
+                anchor.click();
+                btn.textContent = "Record";
+                btn.style.background = "#ff4d4d";
+            }
+        };
+    </script>
+</body>
+</html>
+                    
+    <script>
+
+    </script>
+</body>
+</html>
+            
