@@ -1,266 +1,230 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New website2</title>
+    <title>DEV OS 1 - Pro Demo</title>
     <style>
-
-    </style>
-</head>
-<body>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Beat Mixer - AX Tech</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <style>
-        /* CSS VARIABLES FOR THEMES */
         :root {
-            --bg: #0f0f0f;
-            --panel: #1e1e1e;
-            --accent: #00ffcc;
-            --text: #ffffff;
-            --grid-bg: #000000;
-            --cell-off: #252525;
+            --gold: #FFD700;
+            --glass: rgba(15, 15, 15, 0.95);
+            --border: 1px solid rgba(255, 215, 0, 0.4);
+            --neo-bg: linear-gradient(135deg, #000000 0%, #1a1a1a 40%, #2c240a 100%);
         }
 
-        .theme-midnight {
-            --bg: #0a0e14;
-            --panel: #1a202c;
-            --accent: #718096;
-            --cell-off: #2d3748;
+        body, html {
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            background: var(--neo-bg); color: var(--gold);
+            font-family: 'Segoe UI', sans-serif; overflow: hidden; user-select: none;
         }
 
-        .theme-808 {
-            --bg: #1a1500;
-            --panel: #2d2400;
-            --accent: #ffcc00;
-            --cell-off: #3d3100;
+        /* --- BOOT SCREEN --- */
+        #boot-screen {
+            position: fixed; inset: 0; background: #000;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; z-index: 10000; transition: opacity 0.5s;
         }
+        .boot-logo { font-size: 45px; letter-spacing: 12px; margin-bottom: 20px; font-weight: bold; }
+        .loader-track { width: 220px; height: 3px; background: #1a1a1a; border-radius: 10px; }
+        .loader-fill { width: 0%; height: 100%; background: var(--gold); transition: width 0.1s; }
 
-        body { 
-            background-color: var(--bg); 
-            color: var(--text); 
-            font-family: 'Segoe UI', sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            transition: background 0.3s ease;
-        }
+        /* --- DESKTOP --- */
+        #desktop { position: absolute; inset: 0; padding: 100px 30px; display: flex; flex-direction: column; gap: 20px; z-index: 10; flex-wrap: wrap; align-content: flex-start; }
+        .desktop-item { width: 90px; text-align: center; cursor: pointer; padding: 10px; border-radius: 12px; transition: 0.2s; }
+        .desktop-item:hover { background: rgba(255, 215, 0, 0.15); }
+        .desktop-item span { display: block; font-size: 40px; margin-bottom: 8px; }
+        .desktop-item label { font-size: 12px; color: white; text-shadow: 1px 1px 3px black; pointer-events: none; }
 
-        .brand-top { position: absolute; top: 15px; left: 15px; color: var(--accent); font-weight: bold; font-size: 1.2rem; }
-        .brand-bottom { position: fixed; bottom: 15px; right: 15px; color: #555; font-size: 0.9rem; }
-
-        .app-container { 
-            background: var(--panel); 
-            padding: 30px; 
-            border-radius: 15px; 
-            border: 1px solid #333; 
-            width: fit-content; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-        }
-
-        h1 { color: var(--accent); text-align: center; text-transform: uppercase; letter-spacing: 5px; margin-bottom: 20px; }
-
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(16, 40px); 
-            gap: 6px; 
-            background: var(--grid-bg); 
-            padding: 15px; 
-            border-radius: 8px;
-        }
-
-        .cell { 
-            width: 40px; height: 40px; 
-            background: var(--cell-off); 
-            border-radius: 4px; 
-            cursor: pointer; 
-            border: 1px solid #333; 
-        }
-        
-        /* Active States */
-        .cell.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-        .cell.playing { border: 2px solid white; transform: scale(1.05); }
-
-        .controls { display: flex; gap: 15px; margin-bottom: 25px; align-items: center; justify-content: center; }
-        
-        button { padding: 12px 20px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; text-transform: uppercase; transition: 0.2s; }
-        #playBtn { background: var(--accent); color: black; }
-        #settingsBtn { background: #444; color: white; }
-        #recordBtn { background: #ff4d4d; color: white; }
-
-        /* MODAL STYLES */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: #222;
-            padding: 30px;
-            border-radius: 12px;
-            border: 2px solid var(--accent);
+        /* --- WINDOWS --- */
+        .window, .system-panel {
+            position: absolute; background: var(--glass);
+            border: var(--border); border-radius: 15px; display: none; 
+            backdrop-filter: blur(25px); box-shadow: 0 25px 60px rgba(0,0,0,0.8);
             z-index: 100;
-            width: 300px;
         }
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 99;
+        .window { width: 550px; height: 380px; flex-direction: column; overflow: hidden; }
+        .win-header { padding: 12px 18px; background: rgba(255,215,0,0.1); display: flex; justify-content: space-between; align-items: center; cursor: move; border-bottom: 1px solid rgba(255,215,0,0.1); }
+        .win-body { flex: 1; padding: 20px; overflow-y: auto; color: #fff; }
+        .close-btn { background: #ff5555; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: none; }
+
+        /* --- SYSTEM PANELS --- */
+        #quick-settings { bottom: 95px; right: 20px; width: 300px; padding: 20px; }
+        #notif-center { top: 75px; left: 20px; width: 320px; padding: 20px; }
+        .panel-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+
+        /* --- TASKBAR --- */
+        #taskbar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); height: 65px; background: var(--glass); border: var(--border); border-radius: 35px; display: flex; align-items: center; padding: 0 25px; gap: 20px; z-index: 2000; }
+        .start-btn { width: 45px; height: 45px; background: var(--gold); border-radius: 50%; color: #000; display: flex; justify-content: center; align-items: center; font-weight: 900; cursor: pointer; border: none; }
+        .task-icon { font-size: 26px; cursor: pointer; transition: 0.3s; }
+        .task-icon:hover { transform: translateY(-8px); }
+
+        .pill { position: fixed; top: 20px; background: var(--glass); border: var(--border); padding: 8px 20px; border-radius: 20px; font-size: 14px; z-index: 2000; cursor: pointer; }
+        #clock-pill { left: 20px; }
+        #status-pill { right: 20px; }
+
+        /* --- APP LAUNCHER (MINT MENU) --- */
+        #mint-menu { 
+            position: fixed; bottom: 95px; left: 20px; width: 420px; height: 500px;
+            background: var(--glass); border: var(--border); border-radius: 20px; 
+            display: none; padding: 0; z-index: 3000; overflow: hidden;
+            grid-template-columns: 70px 1fr;
         }
-        .setting-row { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .menu-sidebar { background: rgba(0,0,0,0.2); display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 20px; border-right: 1px solid rgba(255,215,0,0.1); }
+        .menu-main { padding: 20px; overflow-y: auto; }
+        .menu-search { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,215,0,0.2); background: rgba(0,0,0,0.3); color: white; margin-bottom: 15px; box-sizing: border-box; }
+        .menu-item { display: flex; align-items: center; gap: 15px; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 14px; color: #ccc; }
+        .menu-item:hover { background: rgba(255,215,0,0.15); color: var(--gold); }
+
+        #context-menu { position: fixed; background: #111; border: var(--border); border-radius: 8px; width: 160px; display: none; z-index: 5000; padding: 5px; }
+        .ctx-item { padding: 10px; cursor: pointer; border-radius: 5px; }
+        .ctx-item:hover { background: var(--gold); color: #000; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return handleRightClick(event)">
 
-    <div class="brand-top">AX Tech</div>
-
-    <div class="app-container">
-        <h1>Beat Mixer</h1>
-        
-        <div class="controls">
-            <button id="playBtn">Play/Stop</button>
-            <button id="recordBtn">Record</button>
-            <button id="settingsBtn">Settings</button>
-            <button id="clearBtn" style="background: #333; color: #777;">Clear</button>
-        </div>
-
-        <div id="sequencer" class="grid"></div>
+    <div id="boot-screen">
+        <div class="boot-logo">DEV OS 1</div>
+        <div class="loader-track"><div id="load-bar" class="loader-fill"></div></div>
     </div>
 
-    <div class="brand-bottom">by AX</div>
+    <div id="clock-pill" class="pill" onclick="toggleElement('notif-center')">00:00 | Loading...</div>
+    <div id="status-pill" class="pill" onclick="toggleElement('quick-settings')">📶 🔋 ⚙️</div>
 
-    <div class="modal-overlay" id="overlay"></div>
-    <div class="modal" id="settingsModal">
-        <h3>Settings</h3>
-        <div class="setting-row">
-            <label>Master Volume</label>
-            <input type="range" id="volume" min="-60" max="0" value="-10">
+    <div id="desktop">
+        <div class="desktop-item" onclick="toggleElement('files')"><span>📁</span><label>Home</label></div>
+        <div class="desktop-item" onclick="toggleElement('trash')"><span>🗑️</span><label>Trash</label></div>
+    </div>
+
+    <div id="mint-menu" class="system-panel" style="display: none; grid-template-columns: 70px 1fr;">
+        <div class="menu-sidebar">
+            <span>👤</span><span>📁</span><span>⚙️</span><span style="margin-top:auto">🔒</span>
         </div>
-        <div class="setting-row">
-            <label>Theme</label>
-            <select id="themeSelect" style="padding: 5px;">
-                <option value="neon">Neon (Default)</option>
-                <option value="midnight">Midnight</option>
-                <option value="808">808 Gold</option>
-            </select>
+        <div class="menu-main">
+            <input type="text" class="menu-search" placeholder="Search Apps...">
+            <div class="menu-item" onclick="toggleElement('web')">🌐 Web Browser</div>
+            <div class="menu-item" onclick="toggleElement('files')">📁 File Manager</div>
+            <div class="menu-item" onclick="toggleElement('music')">🎵 Studio X Music</div>
+            <div class="menu-item" onclick="toggleElement('terminal')">💻 AX Terminal</div>
+            <div class="menu-item" onclick="toggleElement('calc')">🔢 Calculator</div>
+            <div class="menu-item" onclick="toggleElement('notes')">📝 Notepad</div>
+            <div class="menu-item" onclick="toggleElement('gallery')">🖼️ AX Gallery</div>
+            <div class="menu-item" onclick="toggleElement('code')">⌨️ AX Code Editor</div>
+            <div class="menu-item" onclick="toggleElement('weather')">☁️ Weather</div>
+            <div class="menu-item" onclick="toggleElement('store')">🛍️ App Store</div>
+            <div class="menu-item" onclick="toggleElement('settings')">⚙️ System Settings</div>
+            <div class="menu-item" onclick="toggleElement('tasks')">✅ Task Manager</div>
         </div>
-        <div class="setting-row">
-            <label>BPM: <span id="bpmVal">120</span></label>
-            <input type="range" id="tempo" min="60" max="180" value="120">
-        </div>
-        <button id="closeSettings" style="background: var(--accent); color: black; width: 100%;">Close</button>
+    </div>
+
+    <div id="files" class="window" style="top:15%; left:20%;"><div class="win-header"><span>File Manager</span><button class="close-btn" onclick="toggleElement('files')"></button></div><div class="win-body"><h3>AX Home</h3><p>📁 Documents</p><p>📁 Downloads</p></div></div>
+    <div id="web" class="window" style="top:18%; left:22%;"><div class="win-header"><span>AX Browser</span><button class="close-btn" onclick="toggleElement('web')"></button></div><div class="win-body"><p>Browsing safely on AX-Net.</p></div></div>
+    <div id="music" class="window" style="top:21%; left:24%;"><div class="win-header"><span>Studio X</span><button class="close-btn" onclick="toggleElement('music')"></button></div><div class="win-body"><h3>Now Playing</h3><p>🎵 Neon Dreams - AX Tech</p></div></div>
+    <div id="terminal" class="window" style="top:24%; left:26%;"><div class="win-header"><span>AX Terminal</span><button class="close-btn" onclick="toggleElement('terminal')"></button></div><div class="win-body" style="background:#000; color:#0f0; font-family:monospace; height:100%;">ax@dev-os:~$ _</div></div>
+    <div id="calc" class="window" style="top:10%; left:40%; width:300px; height:400px;"><div class="win-header"><span>Calculator</span><button class="close-btn" onclick="toggleElement('calc')"></button></div><div class="win-body" style="text-align:right; font-size:24px;">0</div></div>
+    <div id="notes" class="window" style="top:30%; left:30%;"><div class="win-header"><span>Notepad</span><button class="close-btn" onclick="toggleElement('notes')"></button></div><div class="win-body"><textarea style="width:100%; height:90%; background:transparent; color:white; border:none; outline:none;" placeholder="Write something..."></textarea></div></div>
+    <div id="weather" class="window" style="top:15%; left:50%; width:250px;"><div class="win-header"><span>Weather</span><button class="close-btn" onclick="toggleElement('weather')"></button></div><div class="win-body"><h2>24°C</h2><p>Sunny in Nairobi</p></div></div>
+    <div id="settings" class="window" style="top:20%; left:40%;"><div class="win-header"><span>Settings</span><button class="close-btn" onclick="toggleElement('settings')"></button></div><div class="win-body"><h4>AX Kernel 2.4</h4><p>Accent: Gold</p></div></div>
+    <div id="trash" class="window" style="top:40%; left:10%;"><div class="win-header"><span>Trash</span><button class="close-btn" onclick="toggleElement('trash')"></button></div><div class="win-body"><p>Trash is empty.</p></div></div>
+    <div id="store" class="window" style="top:10%; left:10%; width:600px;"><div class="win-header"><span>App Store</span><button class="close-btn" onclick="toggleElement('store')"></button></div><div class="win-body"><h3>Featured</h3><p>📦 GIMP 2.1</p><p>📦 VLC Player</p></div></div>
+
+    <div id="quick-settings" class="system-panel">
+        <h3 style="margin-top:0">Control Center</h3>
+        <div class="panel-row"><span>Wi-Fi</span><button class="start-btn" style="width:auto; padding:5px 15px; border-radius:5px;">AX-5G</button></div>
+        <div class="panel-row"><span>Volume</span><input type="range"></div>
+        <div class="panel-row"><span>Brightness</span><input type="range" value="90"></div>
+    </div>
+
+    <div id="notif-center" class="system-panel">
+        <h3 style="margin-top:0">Notifications</h3>
+        <p style="font-size:12px; border-left:2px solid var(--gold); padding-left:10px;"><b>Security:</b> Firewall Active</p>
+    </div>
+
+    <div id="taskbar">
+        <button class="start-btn" onclick="toggleElement('mint-menu')">A</button>
+        <div class="task-icon" onclick="toggleElement('files')">📁</div>
+        <div class="task-icon" onclick="toggleElement('web')">🌐</div>
+        <div class="task-icon" onclick="toggleElement('music')">🎵</div>
+        <div class="task-icon" onclick="toggleElement('settings')">⚙️</div>
+    </div>
+
+    <div id="context-menu">
+        <div class="ctx-item" onclick="createNewFile()">New File</div>
     </div>
 
     <script>
-        const recorder = new Tone.Recorder();
-        const volNode = new Tone.Volume(-10).toDestination();
-        const synth = new Tone.PolySynth(Tone.Synth).connect(volNode).connect(recorder);
-        
-        const notes = ["C5", "B4", "A4", "G4", "F4", "E4", "D4", "C4"];
-        const grid = document.getElementById('sequencer');
-        let currentStep = 0;
+        // BOOT LOGIC
+        let load = 0;
+        const timer = setInterval(() => {
+            load += Math.floor(Math.random()*15);
+            document.getElementById('load-bar').style.width = load + '%';
+            if (load >= 100) {
+                clearInterval(timer);
+                setTimeout(() => document.getElementById('boot-screen').style.display = 'none', 500);
+            }
+        }, 150);
 
-        // Build Grid
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 16; c++) {
-                const cell = document.createElement('div');
-                cell.className = `cell row-${r}`;
-                cell.dataset.row = r;
-                cell.dataset.col = c;
-                cell.onclick = () => {
-                    cell.classList.toggle('active');
-                    if(cell.classList.contains('active')) synth.triggerAttackRelease(notes[r], "16n");
-                };
-                grid.appendChild(cell);
+        // UNIFIED LAYERED TOGGLE
+        let topZ = 1000;
+        function toggleElement(id) {
+            const el = document.getElementById(id);
+            if (el.style.display === 'flex' || el.style.display === 'grid' || el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                topZ++;
+                el.style.zIndex = topZ;
+                // Specific displays for specific layouts
+                if(id === 'mint-menu') el.style.display = 'grid';
+                else if(id.includes('win') || ['files','web','music','terminal','calc','notes','weather','settings','trash','store'].includes(id)) el.style.display = 'flex';
+                else el.style.display = 'block';
+            }
+            // Auto-hide menu when opening an app
+            if(id !== 'mint-menu' && !['quick-settings','notif-center'].includes(id)) {
+                document.getElementById('mint-menu').style.display = 'none';
             }
         }
 
-        // Loop
-        Tone.Transport.scheduleRepeat((time) => {
-            let step = currentStep % 16;
-            document.querySelectorAll('.cell').forEach(c => c.classList.remove('playing'));
-            const column = document.querySelectorAll(`.cell[data-col="${step}"]`);
-            column.forEach(cell => {
-                cell.classList.add('playing');
-                if (cell.classList.contains('active')) {
-                    synth.triggerAttackRelease(notes[cell.dataset.row], "16n", time);
-                }
-            });
-            currentStep++;
-        }, "16n");
+        // CLOCK
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock-pill').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + " | " + now.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+        }
+        setInterval(updateClock, 1000); updateClock();
 
-        // UI Interactions
-        const modal = document.getElementById('settingsModal');
-        const overlay = document.getElementById('overlay');
+        // RIGHT CLICK
+        function handleRightClick(e) {
+            e.preventDefault();
+            const ctx = document.getElementById('context-menu');
+            ctx.style.display = 'block'; ctx.style.left = e.pageX + 'px'; ctx.style.top = e.pageY + 'px';
+            return false;
+        }
 
-        document.getElementById('settingsBtn').onclick = () => {
-            modal.style.display = 'block';
-            overlay.style.display = 'block';
-        };
-
-        document.getElementById('closeSettings').onclick = () => {
-            modal.style.display = 'none';
-            overlay.style.display = 'none';
-        };
-
-        document.getElementById('playBtn').onclick = async () => {
-            await Tone.start();
-            Tone.Transport.state === "started" ? Tone.Transport.stop() : Tone.Transport.start();
-        };
-
-        document.getElementById('themeSelect').onchange = (e) => {
-            document.body.className = '';
-            if (e.target.value !== 'neon') {
-                document.body.classList.add('theme-' + e.target.value);
+        function createNewFile() {
+            const name = prompt("Name:");
+            if(name) {
+                const div = document.createElement('div'); div.className = 'desktop-item';
+                div.innerHTML = `<span>📄</span><label>${name}</label>`;
+                document.getElementById('desktop').appendChild(div);
             }
-        };
+        }
 
-        document.getElementById('volume').oninput = (e) => {
-            volNode.volume.value = e.target.value;
-        };
-
-        document.getElementById('tempo').oninput = (e) => {
-            Tone.Transport.bpm.value = e.target.value;
-            document.getElementById('bpmVal').innerText = e.target.value;
-        };
-
-        document.getElementById('clearBtn').onclick = () => {
-            document.querySelectorAll('.cell').forEach(c => c.classList.remove('active'));
-        };
-
-        document.getElementById('recordBtn').onclick = async () => {
-            const btn = document.getElementById('recordBtn');
-            if (btn.textContent === "Record") {
-                recorder.start();
-                btn.textContent = "Stop/Save";
-                btn.style.background = "orange";
-            } else {
-                const recording = await recorder.stop();
-                const url = URL.createObjectURL(recording);
-                const anchor = document.createElement("a");
-                anchor.download = "ax-tech-track.webm";
-                anchor.href = url;
-                anchor.click();
-                btn.textContent = "Record";
-                btn.style.background = "#ff4d4d";
+        // DRAGGING
+        let activeWin = null;
+        document.addEventListener('mousedown', (e) => {
+            document.getElementById('context-menu').style.display = 'none';
+            if (e.target.closest('.win-header')) {
+                activeWin = e.target.closest('.window');
+                topZ++; activeWin.style.zIndex = topZ;
             }
-        };
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (activeWin) {
+                activeWin.style.left = (e.pageX - 150) + 'px';
+                activeWin.style.top = (e.pageY - 20) + 'px';
+            }
+        });
+        document.addEventListener('mouseup', () => activeWin = null);
     </script>
 </body>
 </html>
-                    
-    <script>
 
-    </script>
-</body>
-</html>
             
